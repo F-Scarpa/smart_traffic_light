@@ -1,93 +1,65 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"  
+
 #include "nvs_flash.h"
-#include "wifi_connect.h"
-#include "mqtt_client.h"
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+//#include "esp_http_server.h"    
 #include "secrets.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "esp_vfs.h"
+#include "esp_vfs_fat.h"
+#include "esp_err.h"
+
+#include "traffic_light.h"
+#include "pedestrian_call.h"   
+#include "pinsSetup.h"
+#include "mymdns.h"
+#include "server_init.h"
+#include "wifi_connect.h"
 
 
-
-static char *TAG = "MQTT";
-//prototypes
-static void mqtt_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
-static void test_send_messages(void *param);
-
-//handlers
-static esp_mqtt_client_handle_t client;
 
 void app_main(void)
-{
+{   
+    int mode = 0;
+    pinsInit();
+    int_init();
+
     ESP_ERROR_CHECK(nvs_flash_init());
     wifi_connect_init();
     ESP_ERROR_CHECK(wifi_connect_sta(WIFI_SSID, WIFI_PASSWORD, 10000));
-    esp_mqtt_client_config_t esp_mqtt_client_config = {                         //configure mqtt client
-        .broker.address.uri = "mqtt://test.mosquitto.org:1883"};           
-    client = esp_mqtt_client_init(&esp_mqtt_client_config);                     //initialize mqtt client
-    esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);         //1.client 2.type of events to listen to 
-                                                                                                // 3.callback 4.args for handler
-    esp_mqtt_client_start(client);              //block until client is started
-    xTaskCreate(test_send_messages, "test_send_messages", 1024*2, NULL, 5, NULL);
-}
 
-static void mqtt_event_handler(void *event_handler_arg, esp_event_base_t event_base,
-                               int32_t event_id, void *event_data)
-{
-    esp_mqtt_event_handle_t event = event_data;
+    start_mdns_service();
+    mount_fs();   
+    init_server();
 
-    switch ((esp_mqtt_event_id_t)event_id)          //event id is uint 32 so we cast it t oesp mqtt event
+    
+                                                                          
+    switch(mode)
     {
-    case MQTT_EVENT_CONNECTED:      //check all events of mqtt
-        ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        esp_mqtt_client_subscribe(client,"animal/mammal/cat/felix",1);          //2 what do we want to listen   3. quality of system
-        esp_mqtt_client_subscribe(client,"animal/reptiles/+/slither",1);         // + menas we can use anythong in is place cat|giorgio|lizard 
-        esp_mqtt_client_subscribe(client,"animal/fish/#",1);        //any fish
+    case 0:
+        while(1)
+        {
+            all_led_off();
+            vTaskDelay(pdMS_TO_TICKS(100));
+        }
         break;
-    case MQTT_EVENT_DISCONNECTED:
-        ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+    case 1:
+        static LedTaskParams timeParams = {.delayTime = 2000};  //we can use struct to create an object, static if to be used in a task
+        xTaskCreate(&traffic_light_cycle,"traffic_light_cycle",2048, &timeParams, 2, NULL);     //this will call the defined task using &object as arguments
+                                                                                            //how arguments are handled is defined in the task function
         break;
-    case MQTT_EVENT_SUBSCRIBED:
-        ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED");
+    case 2:
+        xTaskCreate(&traffic_light_error,"traffic_light_error",2048, NULL, 2, NULL);    //params can also be selected from inside the task but
+                                                                                        //use NULL as 4 parameter in xtaskCreate
         break;
-    case MQTT_EVENT_UNSUBSCRIBED:
-        ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED");
+    case 3:
+        green_led_on();
+        xTaskCreate(&buttonPushedTask,"button_pushed_task",2048, NULL, 2, NULL);
         break;
-    case MQTT_EVENT_PUBLISHED:
-        ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED");
-        break;
-    case MQTT_EVENT_DATA:                               //event coming in
-        printf("topic: %.*s\n",event->topic_len, event->topic);                          //print not terminated string but i know the length
-        printf("message: %.*s\n",event->data_len, event->data); 
-        ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-        break;
-    case MQTT_EVENT_ERROR:
-        ESP_LOGE(TAG, "ERROR %s", strerror(event->error_handle->esp_transport_sock_errno));
-        break;
-    default:
-        break;
-    }
+    }                                                                             
+    
+
 }
 
-
-int MQTT_send(const char* topic, const char* payload){                      //wrapper func = function to semplify code, only type topic and payload
-
-    return esp_mqtt_client_publish(client, topic, payload, strlen(payload), 1, 0);              //3. message to send (payload) 
-                                                                                                //5. QoS (1 always suggested)
-                                                                                                //6. retain if 1
-}
-
-void test_send_messages(void *params)
-{   
-    int count = 0;
-    char message[50];
-    while(true)
-    {
-   
-        sprintf(message, "Hello from esp32 count %d", count++);
-        MQTT_send("animal/message/from/esp32", message);
-        vTaskDelay(pdMS_TO_TICKS(5000));
-    }
-}

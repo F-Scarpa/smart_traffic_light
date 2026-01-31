@@ -45,6 +45,21 @@ cd site
 npm run build
 build flash monitor
 
+//directories and file scope
+
+components
+-folder
+    -file.c     #include "file.h"
+    -file.h     -headers ifndef define endif
+    -CMakeLists 
+        idf_component_register(SRCS  
+                        "file.c" 
+                    INCLUDE_DIRS 
+                        "."
+                    REQUIRES 
+                        *driver*
+           
+                 )
 
 
 

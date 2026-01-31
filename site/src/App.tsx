@@ -1,10 +1,10 @@
-import { useState, useEffect} from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+//import { useState, useEffect} from 'react'
+
 import './App.css'
 
 //App get caleld multiple times in react
 function App() {
+  /*
   const [btnState, setBtnState] = useState(true);
   const [message, setMessage] = useState("");
   const [ledOn, setLedOn] = useState(false);
@@ -95,6 +95,8 @@ function App() {
     -delete http://my-esp32.local part from funcions to call
   */
 
+
+    /*
   useEffect
   (
     () => {
@@ -105,42 +107,15 @@ function App() {
   )
   //when App component is rendered getHelloWorld will be called only once
 
-
+*/
   
 
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>pd</h1>
-      <h1>
-        {message}
-      </h1>
-      <div className="card">
-        <button 
-          style={{backgroundColor: ledOn ? 'lightblue' : ""}} 
-          onClick={() => switchLed((!ledOn))}>
-          {getLedText()}
-        </button>
-        <div style = {{
-          width: "50px",
-          height: "50px",
-          border: "1px solid black", 
-          margin: "auto",
-          borderRadius: "50px",
-          marginTop : "16px",
-          backgroundColor: btnState ? 'pink' : "",
-          }}>
 
-        </div>
-      </div>
+      <h1>pd</h1>
+
   
     </>
   )
