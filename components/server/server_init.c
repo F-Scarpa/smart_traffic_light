@@ -2,6 +2,7 @@
 #include "esp_log.h"
 #include "urls.h"
 
+
 static  httpd_handle_t server = NULL;   //server handle
 
 
@@ -21,9 +22,9 @@ void init_server()     // can be used to store paths
   httpd_uri_t disable_mode_url = {
       .uri = "/api/disable",         
       .method = HTTP_GET,
-      .handler = on_disable_mode_url    //function called while uri is visited
+      .handler = on_disable_mode_url    
     };
-  httpd_register_uri_handler(server, &disable_mode_url);    //register the url in the server
+  httpd_register_uri_handler(server, &disable_mode_url);    
 
     httpd_uri_t auto_mode_url = {
       .uri = "/api/auto",         
@@ -39,13 +40,27 @@ void init_server()     // can be used to store paths
     };
   httpd_register_uri_handler(server, &error_mode_url);  
 
+    httpd_uri_t pedestrian_call_mode_url = {
+      .uri = "/api/pedestrian-call",         
+      .method = HTTP_GET,
+      .handler = on_pedestrian_call_mode_url    
+    };
+  httpd_register_uri_handler(server, &pedestrian_call_mode_url);    
+
+    httpd_uri_t text_url = {
+      .uri = "/api/text",         
+      .method = HTTP_GET,
+      .handler = on_text_url    
+    };
+  httpd_register_uri_handler(server, &text_url);  
+
   
 
-  httpd_uri_t default_url = {   //url = browser address
-    .uri ="/*",                  //accept everything (/*)
+  httpd_uri_t default_url = {   
+    .uri ="/*",                  
     .method = HTTP_GET,
     .handler = on_default_url   
-                                //with /* every url call this func, unless further in sequence
+                                
   };
   httpd_register_uri_handler(server,&default_url);    
 }

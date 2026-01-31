@@ -65,7 +65,6 @@ esp_err_t on_auto_mode_url(httpd_req_t *req)
   httpd_resp_send(req,NULL,0);                      //send http status
   return ESP_OK;
  };
-
 esp_err_t on_error_mode_url(httpd_req_t *req)
  {
   mode = 2;
@@ -74,4 +73,21 @@ esp_err_t on_error_mode_url(httpd_req_t *req)
   httpd_resp_send(req,NULL,0);                      //send http status
   return ESP_OK;
  };
-  
+esp_err_t on_pedestrian_call_mode_url(httpd_req_t *req)
+ {
+  mode = 3;
+  green_led_on();
+  printf("mode is: %d\n",mode);
+  httpd_resp_set_status(req,"204 NO CONTENT");      //set http status
+  httpd_resp_send(req,NULL,0);                      //send http status
+  return ESP_OK;
+ };
+
+  esp_err_t on_text_url(httpd_req_t *req)
+ {
+  char mode_str[16];
+  snprintf(mode_str, sizeof(mode_str), "%d", mode);   //  int to string
+  httpd_resp_set_status(req,"204 NO CONTENT");      //set http status
+  httpd_resp_send(req,NULL,strlen(mode_str));                      //send http status
+  return ESP_OK;
+ };

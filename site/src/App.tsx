@@ -1,120 +1,105 @@
-//import { useState, useEffect} from 'react'
+import { useState, useEffect} from 'react'
 
 import './App.css'
 
-//App get caleld multiple times in react
+
 function App() {
-  /*
-  const [btnState, setBtnState] = useState(true);
-  const [message, setMessage] = useState("");
-  const [ledOn, setLedOn] = useState(false);
-
-
-  const switchLed = async (is_on: boolean) => {
-    const payload = { is_on } ;
-    const webResult = await fetch("/api/toggle-led", {
-      method: "POST",
-      body: JSON.stringify(payload)
-
-    });                 //if a response is received then we change state of ledOn, react only change the graphics
-                        //but dont really control the I/O
-    if(!webResult.ok)
-    {
-      console.error(webResult.statusText);
-      return;
-    }
-    setLedOn(is_on);
-  }
-
-  const getLedText = () => {
-    return ledOn ? "LED is on" : "LED is off";
-  }
-
-  const getHelloWorld = async () =>     //js function for texting purpose
-  {
-                                                                              //before it was : 
-    const webResult = await fetch("/api/hello-world");   //const webResult = await fetch("http://my-esp32.local/api/hello-world"); 
-    const MyText = await webResult.text();
-    setMessage(MyText);
-    console.log(MyText);
-  }
-
-  const getWebSocketUrl = (suffix: string) =>
-  {
-    const l = window.location;
-    return ((l.protocol == "https:" ? "wss://":  "ws://") + l.host + l.pathname + suffix);
-  }
-
-
-  //server creates JSON object which wil lbe read from the websocket
-
-  const webSocket = () => 
-  {
-    const socket = new WebSocket(getWebSocketUrl("ws"));    //create new websocket
-    socket.onopen = () =>        //on opened websocket
-    {
-      socket.send("Hello esp32");
-    }
-    socket.onmessage = (event) =>       //server send data to client
-    {
-      console.log(event.data);    //event.data is data the server received
-      try{
-        const attemptedBtnState = JSON.parse(event.data);
-        setBtnState(attemptedBtnState.btn_state);       //btn_state is built from server with cJSON
-      }
-      finally {
-        
-      }
-    }
-    socket.onerror = (err) =>     //catch errors on ws
-    {
-      console.error(err);
-    };
-    socket.onclose = (event) =>     //ws get closed
-    {
-      console.log(event);
-    }
-  }
   
+  //const [btnState, setBtnState] = useState(true);
+  const [status, setStatus] = useState("pending...");
 
 
-  /*
-    to avoid Cors error and faster testing 
-    - vitejs.dev
-    -search proxy
-    -go to server.proxy
-    -go to site > viteconfig.ts
+  const disable_traffic_light = async () =>     
+  {                                                                         
+    const webResult = await fetch("/api/disable");  
+    console.log(webResult);
+    setStatus("Disabled")
+  }
 
-    -  server:{
-    proxy:{
-      "/api":{
-        target: "http://my-esp32.local/",
-        "changeOrigin":true
-      }
+    const auto_traffic_light = async () =>     
+  {                                                                         
+    const webResult = await fetch("/api/auto");  
+    console.log(webResult);
+    setStatus("Auto")
+  }
 
-    -delete http://my-esp32.local part from funcions to call
-  */
+    const error_traffic_light = async () =>     
+  {                                                                         
+    const webResult = await fetch("/api/error");  
+    console.log(webResult);
+    setStatus("Error")
+  }
+
+    const man_traffic_light = async () =>     
+  {                                                                         
+    const webResult = await fetch("/api/pedestrian-call");  
+    console.log(webResult);
+    setStatus("Manual")
+  }
+
+  const getText = async () =>     
+  {                                                                         
+    const webResult = await fetch("/api/text");  
+    console.log(webResult);
+    setStatus("auto")
+  }
+
+const getCurrentDate = () => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, "0");       // giorno con 2 cifre
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // mese (0-indexed!) quindi +1
+  const year = now.getFullYear();
+
+  return `${day}/${month}/${year}`;
+};
+  const [currentDate, setCurrentDate] = useState(getCurrentDate());
+
+const getCurrentTime = () => {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, "0");   // ore 0-23
+  const minutes = String(now.getMinutes()).padStart(2, "0"); // minuti 0-59
+  return `${hours}:${minutes}`;
+};
+const [currentTime, setCurrentTime] = useState(getCurrentTime());
 
 
-    /*
-  useEffect
-  (
+  useEffect(
     () => {
-        getHelloWorld();      //1. callback func
-        webSocket();
+        getText();      
       },         
-    []                //2. when to update or run this func [] = run only once when component is rendered
-  )
-  //when App component is rendered getHelloWorld will be called only once
+    []                
+  );
 
-*/
+  //update every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDate(getCurrentDate()); 
+    }, (1000 * 60) *24); 
+    return () => clearInterval(interval); 
+  }, []);
+
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    setCurrentTime(getCurrentTime());
+  }, 1000 * 60); 
+  return () => clearInterval(interval); 
+}, []);
+
+
   
 
 
   return (
     <>
 
-      <h1>pd</h1>
+      <h1>{status}</h1>
+      <h2>Oggi: {currentDate}</h2>
+      <h2>Ora: {currentTime}</h2>
+      <button onClick = {disable_traffic_light}>Disable</button>
+      <button onClick = {auto_traffic_light}>Auto</button>
+      <button onClick = {error_traffic_light}>Error</button>
+      <button onClick = {man_traffic_light}>Manual</button>
 
   
     </>
