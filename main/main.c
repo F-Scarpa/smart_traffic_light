@@ -4,8 +4,7 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"  
 
-#include "nvs_flash.h"
-//#include "esp_http_server.h"    
+#include "nvs_flash.h"   
 #include "secrets.h"
 #include "esp_vfs.h"
 #include "esp_vfs_fat.h"
@@ -18,11 +17,68 @@
 #include "server_init.h"
 #include "wifi_connect.h"
 
+int mode = 1;
 
+//task handlers
+TaskHandle_t traffic_handle = NULL;
+TaskHandle_t error_handle = NULL;
+TaskHandle_t button_handle = NULL;
+
+void main_task (void *params)
+{
+    int last_mode = -1;     
+    while(1)
+    {
+            if (mode != last_mode)          //only execute block if mode has been modified
+        {
+            printf("Mode changed: %d\n", mode);
+
+            // Ferma tutti i task precedenti
+            if (traffic_handle)
+            {
+                vTaskDelete(traffic_handle);
+                traffic_handle = NULL;
+            }
+
+            if (error_handle)
+            {
+                vTaskDelete(error_handle);
+                error_handle = NULL;
+            }
+
+            if (button_handle)
+            {
+                vTaskDelete(button_handle);
+                button_handle = NULL;
+            }
+
+            last_mode = mode;
+        }
+    
+        switch(mode)
+        {
+        case 0:
+                all_led_off();
+            break;
+        case 1:
+            xTaskCreate(&traffic_light_cycle,"traffic_light_cycle",2048, NULL, 2, &traffic_handle);     //this will call the defined task using &object as arguments
+                                                                                                //how arguments are handled is defined in the task function
+            break;
+        case 2:
+            xTaskCreate(&traffic_light_error,"traffic_light_error",2048, NULL, 2, &error_handle);    //params can also be selected from inside the task but
+                                                                                            //use NULL as 4 parameter in xtaskCreate
+            break;
+        case 3:
+            green_led_on();
+            xTaskCreate(&buttonPushedTask,"button_pushed_task",2048, NULL, 2, &button_handle);
+            break;
+        }
+    }
+}
 
 void app_main(void)
 {   
-    int mode = 0;
+    
     pinsInit();
     int_init();
 
@@ -34,31 +90,9 @@ void app_main(void)
     mount_fs();   
     init_server();
 
-    
+    xTaskCreate(main_task,"main_task",2048,NULL,5,NULL);
                                                                           
-    switch(mode)
-    {
-    case 0:
-        while(1)
-        {
-            all_led_off();
-            vTaskDelay(pdMS_TO_TICKS(100));
-        }
-        break;
-    case 1:
-        static LedTaskParams timeParams = {.delayTime = 2000};  //we can use struct to create an object, static if to be used in a task
-        xTaskCreate(&traffic_light_cycle,"traffic_light_cycle",2048, &timeParams, 2, NULL);     //this will call the defined task using &object as arguments
-                                                                                            //how arguments are handled is defined in the task function
-        break;
-    case 2:
-        xTaskCreate(&traffic_light_error,"traffic_light_error",2048, NULL, 2, NULL);    //params can also be selected from inside the task but
-                                                                                        //use NULL as 4 parameter in xtaskCreate
-        break;
-    case 3:
-        green_led_on();
-        xTaskCreate(&buttonPushedTask,"button_pushed_task",2048, NULL, 2, NULL);
-        break;
-    }                                                                             
+                                                                             
     
 
 }

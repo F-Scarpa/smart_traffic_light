@@ -17,15 +17,29 @@ void init_server()     // can be used to store paths
   ESP_ERROR_CHECK(httpd_start(&server, &config));   //start the server
 
 //endpoints
-  /*
-  httpd_uri_t toggle_led_url = {
-      .uri = "/api/toggle-led",         //dont use underscores in uri
-      .method = HTTP_POST,
-      .handler = on_toggle_led_url    //function called while uri is visited
+  
+  httpd_uri_t disable_mode_url = {
+      .uri = "/api/disable",         
+      .method = HTTP_GET,
+      .handler = on_disable_mode_url    //function called while uri is visited
     };
-  httpd_register_uri_handler(server, &toggle_led_url);    //register the url in the server
+  httpd_register_uri_handler(server, &disable_mode_url);    //register the url in the server
 
-  */
+    httpd_uri_t auto_mode_url = {
+      .uri = "/api/auto",         
+      .method = HTTP_GET,
+      .handler = on_auto_mode_url    
+    };
+  httpd_register_uri_handler(server, &auto_mode_url);   
+
+      httpd_uri_t error_mode_url = {
+      .uri = "/api/error",         
+      .method = HTTP_GET,
+      .handler = on_error_mode_url    
+    };
+  httpd_register_uri_handler(server, &error_mode_url);  
+
+  
 
   httpd_uri_t default_url = {   //url = browser address
     .uri ="/*",                  //accept everything (/*)

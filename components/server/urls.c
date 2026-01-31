@@ -48,3 +48,30 @@ esp_err_t on_default_url(httpd_req_t *req)
     
     return ESP_OK;
 }
+
+esp_err_t on_disable_mode_url(httpd_req_t *req)
+ {
+  mode = 0;
+  printf("mode is: %d\n",mode);
+  httpd_resp_set_status(req,"204 NO CONTENT");      //set http status
+  httpd_resp_send(req,NULL,0);                      //send http status
+  return ESP_OK;
+ }
+esp_err_t on_auto_mode_url(httpd_req_t *req)
+ {
+  mode = 1;
+  printf("mode is: %d\n",mode);
+  httpd_resp_set_status(req,"204 NO CONTENT");      //set http status
+  httpd_resp_send(req,NULL,0);                      //send http status
+  return ESP_OK;
+ };
+
+esp_err_t on_error_mode_url(httpd_req_t *req)
+ {
+  mode = 2;
+  printf("mode is: %d\n",mode);
+  httpd_resp_set_status(req,"204 NO CONTENT");      //set http status
+  httpd_resp_send(req,NULL,0);                      //send http status
+  return ESP_OK;
+ };
+  

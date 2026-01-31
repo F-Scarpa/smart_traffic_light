@@ -7,32 +7,40 @@
 
 void traffic_light_cycle(void *pvparams)            //void * is a generic pointer, it can be casted to anything
 {
-    LedTaskParams *params = (LedTaskParams *) pvparams;         //convert the generic pvparams pointer to a LedTaskParams pointer
-    static int cycle_flag = 0;
+    (void) pvparams;        
+    int last_cycle = -1;
+    LedTaskParams params = {.delayTime = 2000};       
+    int cycle_flag = 0;
+    
     while(1)            //in the task we always need while loop otherwise the program will crash
     {
-    if (cycle_flag > 2)
-    {
-        cycle_flag = 0;
-    } 
+        if(cycle_flag != last_cycle)
+        {
+        last_cycle = cycle_flag;
+        if (cycle_flag > 2)
+        {
+            cycle_flag = 0;
+        } 
 
-    switch (cycle_flag)
-    {
-    case 0:
-        //red_led_on();
-        break;
-    case 1:
-        //green_led_on();
-        break;
-    case 2:
-        //yellow_led_on();
-        break;
-    default:
-        break;
+        switch (cycle_flag)
+        {
+        case 0:
+            red_led_on();
+            break;
+        case 1:
+            green_led_on();
+            break;
+        case 2:
+            yellow_led_on();
+            break;
+        default:
+            break;
+        }
+        printf("cycle flag is: %d\n", cycle_flag);
     }
     cycle_flag++;
-    vTaskDelay(pdMS_TO_TICKS(params->delayTime));
-    printf("cycle flag is: %d\n", cycle_flag);
+    vTaskDelay(pdMS_TO_TICKS(params.delayTime));
+    
     }
 }
 
