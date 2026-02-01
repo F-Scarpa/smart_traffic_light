@@ -17,7 +17,8 @@
 #include "server_init.h"
 #include "wifi_connect.h"
 
-volatile int mode = 1;
+volatile int mode = 0;
+volatile int vehicle_tra_lig_state = 0;
 
 //task handlers
 TaskHandle_t traffic_handle = NULL;

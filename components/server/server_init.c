@@ -3,7 +3,7 @@
 #include "urls.h"
 
 
-static  httpd_handle_t server = NULL;   //server handle
+httpd_handle_t server = NULL;   //server handle
 
 
 
@@ -17,8 +17,19 @@ void init_server()     // can be used to store paths
   config.uri_match_fn = httpd_uri_match_wildcard;   //enables the use of wildcards in routes, (/*)
   ESP_ERROR_CHECK(httpd_start(&server, &config));   //start the server
 
-//endpoints
-  
+  //websocket
+  httpd_uri_t web_socket_url = {
+    .uri = "/ws",         
+    .method = HTTP_GET,
+    .handler = on_WEB_SOCKET_url,
+    .is_websocket = true              //for websockets only
+    };
+  httpd_register_uri_handler(server, &web_socket_url);
+
+
+
+
+  //endpoints
   httpd_uri_t disable_mode_url = {
       .uri = "/api/disable",         
       .method = HTTP_GET,

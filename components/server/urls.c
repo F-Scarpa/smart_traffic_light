@@ -1,8 +1,63 @@
 #include "urls.h"
 #include "esp_log.h"
+#include <string.h>
+#include <stdio.h>
 
 
 static const char *TAG = "SERVER";
+
+#define WS_MAX_SIZE 1024
+static int client_session_id;
+esp_err_t send_ws_message(char* message)
+{
+  //error if there is no client id
+  if(!client_session_id)
+  {
+    ESP_LOGE(TAG, "no client id");
+    return -1;
+  }
+  //message config
+  httpd_ws_frame_t ws_message = {
+    .final = true,
+    .fragmented = false,
+    .len = strlen(message),
+    .payload = (uint8_t *)message,
+    .type = HTTPD_WS_TYPE_TEXT
+
+  };
+  httpd_ws_send_frame_async(server, client_session_id, &ws_message);
+  return 1;
+}
+
+//websocket url callback
+esp_err_t on_WEB_SOCKET_url(httpd_req_t *req)
+{
+  client_session_id = httpd_req_to_sockfd(req);
+  if(req->method == HTTP_GET) return ESP_OK;
+  
+  httpd_ws_frame_t ws_pkt;
+  memset(&ws_pkt,0,sizeof(httpd_ws_frame_t)); //reset/clean memory on ws.pkt address
+  ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+  ws_pkt.payload = malloc(WS_MAX_SIZE);         //create our own heap memory
+  httpd_ws_recv_frame(req,&ws_pkt,WS_MAX_SIZE);   //copy memory 
+  printf("ws payload: %.*s\n", ws_pkt.len, ws_pkt.payload);     //1. length to print 2. start index pointer 
+  free(ws_pkt.payload);   //free memory
+
+  char* response = "{\"status\":\"connected OK\"}";   //response to websocket client
+  httpd_ws_frame_t ws_response = {
+    .final = true,
+    .fragmented = false,
+    .type = HTTPD_WS_TYPE_TEXT,
+    .payload = (uint8_t *)response,
+    .len = strlen(response), 
+  };
+  return httpd_ws_send_frame(req, &ws_response);
+  
+}
+
+
+
+
 esp_err_t on_default_url(httpd_req_t *req)    
 {                                                     //http home url page
     ESP_LOGI(TAG,"URL: %s",req->uri);
@@ -91,3 +146,4 @@ esp_err_t on_pedestrian_call_mode_url(httpd_req_t *req)
   httpd_resp_send(req,NULL,strlen(mode_str));                      //send http status
   return ESP_OK;
  };
+

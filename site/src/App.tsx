@@ -7,6 +7,60 @@ function App() {
   
   //const [btnState, setBtnState] = useState(true);
   const [status, setStatus] = useState("pending...");
+  const [colorNum, setColorNum] = useState(0);
+
+  
+  const getWebSocketUrl = (suffix: string) =>
+  {
+    const l = window.location;
+    return ((l.protocol == "https:" ? "wss://":  "ws://") + l.host + l.pathname + suffix);
+  }
+
+  //server creates JSON object which will be read from the websocket
+
+  const webSocket = () => 
+  {
+    const socket = new WebSocket(getWebSocketUrl("ws"));    //create new websocket
+    socket.onopen = () =>        //on opened websocket
+    {
+      socket.send("Hello esp32");
+    }
+    socket.onmessage = (event) =>       //server send data to client
+    {
+      console.log(event.data);    //event.data is data the server received
+      try{
+        const espColorNum = JSON.parse(event.data);
+        //setBtnState(attemptedBtnState.btn_state);       //btn_state is built from server with cJSON
+        console.log(espColorNum.tra_lig_state);           //extract tra_lig_state value from JSON object
+        setColorNum(espColorNum.tra_lig_state);
+      }
+      finally {
+        
+      }
+    }
+    socket.onerror = (err) =>     //catch errors on ws
+    {
+      console.error(err);
+    };
+    socket.onclose = (event) =>     //ws get closed
+    {
+      console.log(event);
+    }
+  }
+
+  const ledColor = () => {
+    switch(colorNum)
+    {
+      case 1:
+        return "red";
+      case 2:
+        return "yellow";
+      case 3:
+        return "green";
+      default :
+        return "gray";
+    }
+  } 
 
 
   const disable_traffic_light = async () =>     
@@ -78,6 +132,10 @@ const [currentTime, setCurrentTime] = useState(getCurrentTime());
     return () => clearInterval(interval); 
   }, []);
 
+  useEffect(() => {
+    webSocket()
+  },[]);
+
 
   useEffect(() => {
   const interval = setInterval(() => {
@@ -100,6 +158,8 @@ const [currentTime, setCurrentTime] = useState(getCurrentTime());
       <button onClick = {auto_traffic_light}>Auto</button>
       <button onClick = {error_traffic_light}>Error</button>
       <button onClick = {man_traffic_light}>Manual</button>
+      <div  className = "ledState"
+            style={{backgroundColor : ledColor()}}></div>
 
   
     </>
